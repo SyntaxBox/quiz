@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>اختبار أساسيات علوم الحاسب</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --hacker-green: #00ff41;
+        --bg-dark: #0a0a0a;
+        --text-color: #00ff41;
+      }
+
+      body {
+        font-family: "Amiri", serif;
+        background-color: var(--bg-dark);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
+        line-height: 1.6;
+      }
+
+      #quiz-container {
+        background-color: rgba(0, 255, 65, 0.1);
+        border: 2px solid var(--hacker-green);
+        border-radius: 10px;
+        padding: 30px;
+        width: 100%;
+        max-width: 600px;
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        text-align: center;
+      }
+
+      #timer {
+        text-align: left;
+        font-size: 1.5em;
+        margin-bottom: 15px;
+      }
+
+      #question {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.3em;
+      }
+
+      #choices {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      .choice {
+        background-color: rgba(0, 255, 65, 0.1);
+        border: 2px solid var(--hacker-green);
+        color: var(--text-color);
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: 5px;
+        font-size: 1em;
+      }
+
+      .choice:hover {
+        background-color: rgba(0, 255, 65, 0.2);
+      }
+
+      .choice.correct {
+        background-color: rgba(0, 255, 65, 0.5);
+        border-color: #00ff41;
+      }
+
+      .choice.incorrect {
+        background-color: rgba(255, 0, 0, 0.3);
+        border-color: red;
+      }
+
+      #next-btn,
+      #start-btn {
+        display: inline-block;
+        width: 100%;
+        padding: 15px;
+        background-color: var(--hacker-green);
+        color: var(--bg-dark);
+        border: none;
+        margin-top: 15px;
+        cursor: pointer;
+        font-weight: bold;
+        border-radius: 5px;
+        font-size: 1.2em;
+      }
+
+      #start-btn {
+        display: inline-block;
+      }
+
+      #next-btn {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="quiz-container">
+      <div id="timer" style="display: none">الوقت المتبقي: 60 ثانية</div>
+      <div id="question">مرحباً بك في اختبار أساسيات علوم الحاسب</div>
+      <div id="choices"></div>
+      <button id="next-btn">السؤال التالي</button>
+      <button id="start-btn">ابدأ الاختبار</button>
+    </div>
+
+    <script>
+      const allQuestions = [
+        {
+          question: "ما هو التشفير؟",
+          choices: [
+            "تقنيات لحماية البيانات ومنع الوصول غير المصرح به",
+            "خوارزميات تحويل البيانات بشكل مشفر",
+            "طريقة لحماية البيانات من الوصول غير المصرح به",
+            "طريقة لتحويل النصوص إلى صيغ غير قابلة للفهم",
+          ],
+          correct: "طريقة لحماية البيانات من الوصول غير المصرح به",
+        },
+        {
+          question: "ما هي البرمجة؟",
+          choices: [
+            "العملية التي تتيح للكمبيوتر تنفيذ المهام بشكل تلقائي",
+            "عملية كتابة التعليمات لجهاز الكمبيوتر",
+            "تحويل الأفكار إلى تعليمات يمكن للكمبيوتر فهمها",
+            "استخدام أدوات التطوير لتحسين أداء الكمبيوتر",
+          ],
+          correct: "عملية كتابة التعليمات لجهاز الكمبيوتر",
+        },
+        {
+          question: "ما هي لغة البرمجة Python؟",
+          choices: [
+            "لغة برمجة موجهة للكائنات مع العديد من المكتبات القوية",
+            "لغة برمجة شائعة وسهلة الاستخدام",
+            "لغة برمجة بسيطة وتستخدم في مجال البيانات",
+            "لغة برمجة تستخدم بشكل رئيسي في تطوير الألعاب",
+          ],
+          correct: "لغة برمجة شائعة وسهلة الاستخدام",
+        },
+        {
+          question: "ما هو الذكاء الاصطناعي؟",
+          choices: [
+            "تقنيات تمكن الآلات من التفكير مثل البشر",
+            "أنظمة تعلم ذاتي تتكيف مع بيئات مختلفة",
+            "مجموعة من الخوارزميات التي تعتمد على تحليل البيانات",
+            "نظام تشغيل يدمج تقنيات الذكاء البشري",
+          ],
+          correct: "تقنيات تمكن الآلات من التفكير مثل البشر",
+        },
+        {
+          question: "ما هو الحاسوب؟",
+          choices: [
+            "جهاز لمعالجة البيانات وحفظ المعلومات",
+            "آلة إلكترونية تقوم بتنفيذ تعليمات البرمجة",
+            "أداة مخصصة للتخزين وإدارة البيانات",
+            "جهاز يستخدم لتنفيذ الحسابات الرياضية فقط",
+          ],
+          correct: "جهاز لمعالجة البيانات",
+        },
+        {
+          question: "ما هي لغة HTML؟",
+          choices: [
+            "لغة من لغات البرمجة الأساسية لإنشاء التطبيقات",
+            "لغة لإنشاء صفحات الويب باستخدام الهيكل والتنسيق",
+            "لغة مخصصة لإنشاء تطبيقات سطح المكتب",
+            "أداة تستخدم لتصميم الرسومات المتجهة",
+          ],
+          correct: "لغة لإنشاء صفحات الويب",
+        },
+        {
+          question: "ما هي وظيفة نظام التشغيل؟",
+          choices: [
+            "إدارة تشغيل الأجهزة وتوزيع الموارد بين البرامج",
+            "تحسين أداء البرامج من خلال إدارة الذاكرة",
+            "إدارة الاتصالات بين الأجهزة المتصلة",
+            "توفير بيئة مخصصة لتطوير التطبيقات البرمجية",
+          ],
+          correct: "إدارة موارد الحاسوب",
+        },
+        {
+          question: "ما هو الإنترنت؟",
+          choices: [
+            "شبكة عالمية تربط بين الحواسيب لتبادل المعلومات",
+            "نظام لتبادل البيانات بين الخوادم",
+            "شبكة من الأجهزة التي تتيح الوصول إلى الإنترنت",
+            "تطبيق مخصص لعرض المحتوى النصي والمرئي",
+          ],
+          correct: "شبكة عالمية تربط بين الحواسيب",
+        },
+        {
+          question: "ما هي لغة البرمجة C++؟",
+          choices: [
+            "لغة برمجة تستخدم لتطوير تطبيقات سطح المكتب والخوادم",
+            "لغة برمجة قوية وشائعة وتستخدم في الألعاب",
+            "لغة برمجة مبتكرة تستخدم لتطوير الذكاء الاصطناعي",
+            "لغة برمجة قديمة تم استبدالها بلغات أخرى",
+          ],
+          correct: "لغة برمجة قوية وشائعة",
+        },
+        {
+          question: "ما هو Google؟",
+          choices: [
+            "محرك بحث قوي يستخدم تقنيات الذكاء الاصطناعي لتحليل البيانات",
+            "خدمة عبر الإنترنت تستخدم لاستعلامات البحث",
+            "منصة لبناء مواقع الويب والتطبيقات",
+            "خدمة تقدم حلول الشبكات والأمن السيبراني",
+          ],
+          correct: "محرك بحث على الإنترنت",
+        },
+
+        // Medium Questions
+        {
+          question: "ما هو الهدف من استخدام الخوارزميات في البرمجة؟",
+          choices: [
+            "حساب البيانات واستخراج المعلومات بطريقة منطقية",
+            "حل المشكلات بطرق فعالة ومنظمة",
+            "ترتيب البيانات حسب أولويات معينة",
+            "تحويل البيانات إلى أشكال يمكن معالجتها بواسطة الحاسوب",
+          ],
+          correct: "حل المشكلات بطرق فعالة ومنظمة",
+        },
+        {
+          question: "ما هي وظيفة مكتبة TensorFlow؟",
+          choices: [
+            "بناء وتدريب نماذج التعلم الآلي ومعالجة البيانات",
+            "إنشاء تطبيقات ذكية تستخدم تقنيات التعلم العميق",
+            "تحسين أداء الخوادم من خلال التعلم الآلي",
+            "تصميم واجهات المستخدم للتطبيقات الذكية",
+          ],
+          correct: "بناء وتدريب نماذج التعلم الآلي",
+        },
+        {
+          question: "ما الفرق بين لغة Java و JavaScript؟",
+          choices: [
+            "Java تستخدم للتطبيقات الكبيرة، وJavaScript تستخدم لتطوير الويب",
+            "Java هي لغة أساسية لإنشاء التطبيقات، وJavaScript مخصصة للمحتوى التفاعلي",
+            "Java هي لغة برمجة موجهة للكائنات، بينما JavaScript مخصصة للواجهات الأمامية",
+            "Java وJavaScript هما نفس اللغة ولكن مع وظائف مختلفة",
+          ],
+          correct:
+            "Java تستخدم للتطبيقات الكبيرة، وJavaScript تستخدم لتطوير الويب",
+        },
+        {
+          question:
+            "ما هو الفرق بين التعليمات البرمجية المصدرية والكود المترجم؟",
+          choices: [
+            "التعليمات المصدرية تُكتب من قبل المبرمج، والكود المترجم يفهمه الحاسوب",
+            "التعليمات المصدرية قابلة للتنفيذ مباشرة، بينما الكود المترجم يحتاج إلى تفسير",
+            "التعليمات المصدرية تتعلق بتنفيذ العمليات الرياضية فقط",
+            "الكود المترجم هو الشيفرة التي يكتبها الحاسوب لتحليل البيانات",
+          ],
+          correct:
+            "التعليمات المصدرية تُكتب من قبل المبرمج، والكود المترجم يفهمه الحاسوب",
+        },
+        {
+          question: "ما هو التعلم العميق؟",
+          choices: [
+            "فرع من التعلم الآلي يعتمد على الشبكات العصبية العميقة لتحليل البيانات",
+            "تقنيات لتحليل البيانات الكبيرة باستخدام الخوارزميات المتقدمة",
+            "مجموعة من الأساليب لتحسين أداء الخوادم",
+            "عملية تعليم الآلات لفهم وتطبيق الأفكار المعقدة",
+          ],
+          correct: "فرع من التعلم الآلي يعتمد على الشبكات العصبية",
+        },
+        {
+          question: "ما هي وظيفة بروتوكول HTTP؟",
+          choices: [
+            "نقل البيانات بين المتصفح والخادم باستخدام الطلبات والاستجابات",
+            "تحويل النصوص إلى صيغة قابلة للعرض في المتصفحات",
+            "إدارة البيانات في قواعد البيانات المتصلة بالويب",
+            "تحليل المعلومات المرسلة بين التطبيقات المحمولة",
+          ],
+          correct: "نقل البيانات بين المتصفح والخادم",
+        },
+        {
+          question: "ما هو مفهوم الأمن السيبراني؟",
+          choices: [
+            "حماية الأنظمة والشبكات من الهجمات الرقمية",
+            "التأكد من سلامة الشبكة الكهربائية",
+            "إعداد خوادم الويب",
+            "كتابة أكواد البرمجة فقط",
+          ],
+          correct: "حماية الأنظمة والشبكات من الهجمات الرقمية",
+        },
+        {
+          question: "ما هو مفهوم الشبكة الخاصة الافتراضية (VPN)؟",
+          choices: [
+            "إخفاء عنوان IP وتأمين الاتصال عبر الإنترنت",
+            "تسريع الإنترنت باستخدام أدوات خاصة",
+            "نقل البيانات عبر الإنترنت بسرعة عالية",
+            "أنظمة تشغيل مخصصة للأجهزة المحمولة",
+          ],
+          correct: "إخفاء عنوان IP وتأمين الاتصال عبر الإنترنت",
+        },
+        {
+          question: "ما هو الفرق بين HTTP و HTTPS؟",
+          choices: [
+            "HTTPS أكثر أماناً من HTTP لأنه يستخدم تشفير SSL/TLS",
+            "HTTP يستخدم لنقل الصوت، بينما HTTPS لنقل النصوص",
+            "HTTPS يستخدم مع البريد الإلكتروني فقط",
+            "لا يوجد فرق بين HTTP و HTTPS",
+          ],
+          correct: "HTTPS أكثر أماناً من HTTP لأنه يستخدم تشفير SSL/TLS",
+        },
+        {
+          question: "ما هو الهدف من الخوارزميات في البرمجة؟",
+          choices: [
+            "حل المشكلات بطرق فعالة ومنظمة",
+            "كتابة الأكواد بسرعة دون الاهتمام بالجودة",
+            "استخدام الذاكرة بشكل أكبر",
+            "التأكد من أن جميع الأكواد تعمل بدون أخطاء",
+          ],
+          correct: "حل المشكلات بطرق فعالة ومنظمة",
+        },
+        {
+          question: "ما هي وظيفة مفتاح الذاكرة RAM في الحاسوب؟",
+          choices: [
+            "تخزين البيانات بشكل مؤقت أثناء العمل",
+            "الاحتفاظ بالملفات بشكل دائم",
+            "زيادة سرعة الإنترنت",
+            "التحكم في إضاءة الشاشة",
+          ],
+          correct: "تخزين البيانات بشكل مؤقت أثناء العمل",
+        },
+        {
+          question: "ما هي تقنية الواقع المعزز (AR)؟",
+          choices: [
+            "إضافة عناصر افتراضية إلى العالم الحقيقي باستخدام الأجهزة",
+            "تصميم صور ثلاثية الأبعاد فقط",
+            "تقنيات لإنشاء بيئات افتراضية بالكامل",
+            "تشغيل الفيديوهات بشكل أسرع",
+          ],
+          correct: "إضافة عناصر افتراضية إلى العالم الحقيقي باستخدام الأجهزة",
+        },
+        {
+          question: "ما هو مفهوم الذكاء الاصطناعي؟",
+          choices: [
+            "أنظمة تحاكي الذكاء البشري لأداء المهام",
+            "تقنيات لتحليل البيانات فقط",
+            "أنظمة لتحرير الصور والفيديو",
+            "تطوير أنظمة التشغيل",
+          ],
+          correct: "أنظمة تحاكي الذكاء البشري لأداء المهام",
+        },
+        {
+          question: "ما هو تعريف نظام إدارة قواعد البيانات (DBMS)؟",
+          choices: [
+            "نظام يستخدم لإدارة البيانات وتخزينها وتنظيمها بشكل فعال",
+            "أداة لكتابة الأكواد البرمجية",
+            "نظام لتصميم التطبيقات",
+            "أداة لإنشاء الرسوم البيانية",
+          ],
+          correct: "نظام يستخدم لإدارة البيانات وتخزينها وتنظيمها بشكل فعال",
+        },
+        {
+          question: "ما هي وظيفة البرمجيات الخبيثة؟",
+          choices: [
+            "إلحاق الضرر بالنظام أو سرقة البيانات",
+            "تحسين أداء النظام",
+            "توفير حماية إضافية للنظام",
+            "إدارة قواعد البيانات",
+          ],
+          correct: "إلحاق الضرر بالنظام أو سرقة البيانات",
+        },
+        {
+          question: "ما هي وظيفة البروتوكولات في الشبكات؟",
+          choices: [
+            "تحديد القواعد التي تنظم كيفية تبادل البيانات عبر الشبكة",
+            "تخزين البيانات في الذاكرة",
+            "تحسين سرعة الإنترنت",
+            "تنظيم تصفح المواقع الإلكترونية",
+          ],
+          correct: "تحديد القواعد التي تنظم كيفية تبادل البيانات عبر الشبكة",
+        },
+        {
+          question: "ما هي قاعدة البيانات الموزعة؟",
+          choices: [
+            "قاعدة بيانات تُخزن البيانات في مواقع مختلفة متصلة بالشبكة",
+            "قاعدة بيانات تعمل على جهاز واحد فقط",
+            "قاعدة بيانات تستخدم فقط لتخزين النصوص",
+            "قاعدة بيانات خاصة بالذكاء الاصطناعي",
+          ],
+          correct: "قاعدة بيانات تُخزن البيانات في مواقع مختلفة متصلة بالشبكة",
+        },
+        {
+          question:
+            "ما هو الفرق بين الشبكة المحلية (LAN) والشبكة الواسعة (WAN)؟",
+          choices: [
+            "الشبكة المحلية تغطي منطقة صغيرة بينما الشبكة الواسعة تغطي مناطق كبيرة",
+            "الشبكة المحلية أسرع من الشبكة الواسعة",
+            "الشبكة الواسعة لا تدعم الإنترنت",
+            "الشبكة المحلية هي فقط للاتصال بين أجهزة الكمبيوتر المحمولة",
+          ],
+          correct:
+            "الشبكة المحلية تغطي منطقة صغيرة بينما الشبكة الواسعة تغطي مناطق كبيرة",
+        },
+        {
+          question: "ما هو مفهوم الحوسبة السحابية؟",
+          choices: [
+            "تخزين البيانات وتشغيل التطبيقات عبر الإنترنت بدلاً من الأجهزة المحلية",
+            "تخزين البيانات على الأقراص الصلبة فقط",
+            "تقنيات لإزالة الفيروسات من الحاسوب",
+            "إعداد الشبكات الداخلية للشركات",
+          ],
+          correct:
+            "تخزين البيانات وتشغيل التطبيقات عبر الإنترنت بدلاً من الأجهزة المحلية",
+        },
+        {
+          question: "ما هي وظيفة تطبيقات الويب؟",
+          choices: [
+            "تمكين المستخدمين من الوصول إلى التطبيقات عبر الإنترنت باستخدام المتصفح",
+            "تشغيل الألعاب على الإنترنت",
+            "إدارة قواعد البيانات فقط",
+            "إنشاء تطبيقات الهواتف المحمولة",
+          ],
+          correct:
+            "تمكين المستخدمين من الوصول إلى التطبيقات عبر الإنترنت باستخدام المتصفح",
+        },
+        {
+          question: "ما هي وظيفة واجهة برمجة التطبيقات (API)؟",
+          choices: [
+            "تمكين البرامج من التواصل مع بعضها البعض وتبادل البيانات",
+            "تصميم واجهات المستخدم",
+            "إدارة النظام بشكل كامل",
+            "تحليل البيانات الكبيرة",
+          ],
+          correct: "تمكين البرامج من التواصل مع بعضها البعض وتبادل البيانات",
+        },
+        {
+          question: "ما هو الفرق بين الـ Frontend والـ Backend في تطوير الويب؟",
+          choices: [
+            "الـ Frontend يتعامل مع واجهات المستخدم، بينما الـ Backend يتعامل مع الخوادم وقواعد البيانات",
+            "الـ Frontend هو البرمجة، والـ Backend هو التصميم",
+            "الـ Frontend يعنى بالأمن السيبراني، بينما الـ Backend هو البرمجة",
+            "لا يوجد فرق بينهما",
+          ],
+          correct:
+            "الـ Frontend يتعامل مع واجهات المستخدم، بينما الـ Backend يتعامل مع الخوادم وقواعد البيانات",
+        },
+        {
+          question: "ما هو مفهوم الويب 3.0؟",
+          choices: [
+            "جيل جديد من الإنترنت يعتمد على اللامركزية والتقنيات الحديثة مثل البلوكشين",
+            "تحديث للإنترنت الحالي مع تحسين السرعة",
+            "نسخة جديدة من HTML فقط",
+            "تطبيقات تدير بيانات المستخدمين بشكل أكبر",
+          ],
+          correct:
+            "جيل جديد من الإنترنت يعتمد على اللامركزية والتقنيات الحديثة مثل البلوكشين",
+        },
+        {
+          question:
+            "ما هي لغة البرمجة الأكثر استخدامًا في تطوير تطبيقات الويب؟",
+          choices: ["JavaScript", "Python", "C#", "Swift"],
+          correct: "JavaScript",
+        },
+        {
+          question: "ما هو الفرق بين الـ Compiler والمترجم (Interpreter)؟",
+          choices: [
+            "المترجم يحول الكود إلى تعليمات يمكن للحاسوب تنفيذها بشكل فوري، بينما الـ Compiler يحول الكود إلى ملف مستقل يمكن تشغيله لاحقًا",
+            "الـ Compiler أسرع من المترجم",
+            "المترجم يعمل فقط مع C++",
+            "الـ Compiler لا يدعم البرمجة الكائنية",
+          ],
+          correct:
+            "المترجم يحول الكود إلى تعليمات يمكن للحاسوب تنفيذها بشكل فوري، بينما الـ Compiler يحول الكود إلى ملف مستقل يمكن تشغيله لاحقًا",
+        },
+        {
+          question: "ما هو مفهوم الذاكرة العشوائية (RAM)؟",
+          choices: [
+            "ذاكرة مؤقتة تستخدم لتخزين البيانات التي يحتاجها الحاسوب أثناء العمل",
+            "ذاكرة دائمة لتخزين البيانات مثل الصور والفيديو",
+            "إدارة عمليات النظام فقط",
+            "شحن الأجهزة الكهربائية",
+          ],
+          correct:
+            "ذاكرة مؤقتة تستخدم لتخزين البيانات التي يحتاجها الحاسوب أثناء العمل",
+        },
+        {
+          question: "ما هو الفرق بين الخوارزمية والبرنامج؟",
+          choices: [
+            "الخوارزمية هي مجموعة من الخطوات لحل مشكلة معينة، بينما البرنامج هو تطبيق مبرمج يمكن تشغيله على الحاسوب",
+            "الخوارزمية هي نوع من الأكواد البرمجية",
+            "البرنامج هو خوارزمية ثابتة",
+            "الخوارزمية تستخدم فقط مع الشبكات",
+          ],
+          correct:
+            "الخوارزمية هي مجموعة من الخطوات لحل مشكلة معينة، بينما البرنامج هو تطبيق مبرمج يمكن تشغيله على الحاسوب",
+        },
+        // More Questions (as required)
+      ].map((question) => {
+        const shuffledChoices = [...question.choices].sort(
+          () => Math.random() - 0.5
+        );
+        return {
+          ...question,
+          choices: shuffledChoices,
+        };
+      });
+      class QuizApp {
+        constructor(allQuestions) {
+          this.allQuestions = allQuestions;
+          this.quiz = this.getRandomQuestions(10);
+          this.currentQuestionIndex = 0;
+          this.score = 0;
+          this.timeLeft = 120;
+          this.timerInterval = null;
+
+          this.questionEl = document.getElementById("question");
+          this.choicesEl = document.getElementById("choices");
+          this.timerEl = document.getElementById("timer");
+          this.nextBtn = document.getElementById("next-btn");
+          this.startBtn = document.getElementById("start-btn");
+
+          this.nextBtn.addEventListener("click", () => this.loadNextQuestion());
+          this.startBtn.addEventListener("click", () => this.startQuiz());
+        }
+
+        getRandomQuestions(count) {
+          const shuffled = [...this.allQuestions].sort(
+            () => 0.5 - Math.random()
+          );
+          return shuffled.slice(0, count);
+        }
+
+        startQuiz() {
+          this.startBtn.style.display = "none";
+          this.timerEl.style.display = "block";
+          this.startTimer();
+          this.loadQuestion();
+        }
+
+        startTimer() {
+          this.timerInterval = setInterval(() => {
+            this.timeLeft--;
+            this.timerEl.textContent = `الوقت المتبقي: ${this.timeLeft} ثانية`;
+
+            if (this.timeLeft <= 0) {
+              this.endQuiz();
+            }
+          }, 1000);
+        }
+
+        loadQuestion() {
+          const question = this.quiz[this.currentQuestionIndex];
+
+          this.questionEl.textContent = question.question;
+          this.choicesEl.innerHTML = "";
+          this.nextBtn.style.display = "none";
+
+          question.choices.forEach((choice) => {
+            const choiceEl = document.createElement("div");
+            choiceEl.classList.add("choice");
+            choiceEl.textContent = choice;
+            choiceEl.addEventListener("click", () =>
+              this.checkAnswer(choiceEl, choice)
+            );
+            this.choicesEl.appendChild(choiceEl);
+          });
+        }
+
+        checkAnswer(choiceEl, selectedChoice) {
+          const correctAnswer = this.quiz[this.currentQuestionIndex].correct;
+
+          // Disable further clicks
+          this.choicesEl.querySelectorAll(".choice").forEach((el) => {
+            el.style.pointerEvents = "none";
+          });
+
+          if (selectedChoice === correctAnswer) {
+            choiceEl.classList.add("correct");
+            this.score++;
+          } else {
+            choiceEl.classList.add("incorrect");
+            Array.from(this.choicesEl.children)
+              .find((el) => el.textContent === correctAnswer)
+              ?.classList.add("correct");
+          }
+
+          this.nextBtn.style.display = "block";
+        }
+
+        loadNextQuestion() {
+          this.currentQuestionIndex++;
+
+          if (this.currentQuestionIndex < this.quiz.length) {
+            this.loadQuestion();
+          } else {
+            this.endQuiz();
+          }
+        }
+
+        endQuiz() {
+          clearInterval(this.timerInterval);
+          this.questionEl.textContent = `اكتمل الاختبار! نتيجتك: ${this.score}/${this.quiz.length}`;
+          this.choicesEl.innerHTML = "";
+          this.nextBtn.style.display = "none";
+          this.timerEl.textContent = `انتهى الوقت!`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        new QuizApp(allQuestions);
+      });
+    </script>
+  </body>
+</html>
